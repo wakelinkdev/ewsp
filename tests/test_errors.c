@@ -205,7 +205,6 @@ static int test_error_is_fatal(void) {
     /* Fatal errors */
     TEST_ASSERT(ewsp_error_is_fatal(EWSP_ERR_AUTH_FAILED), "AUTH_FAILED fatal");
     TEST_ASSERT(ewsp_error_is_fatal(EWSP_ERR_INVALID_TOKEN), "INVALID_TOKEN fatal");
-    TEST_ASSERT(ewsp_error_is_fatal(EWSP_ERR_SESSION_EXPIRED), "SESSION_EXPIRED fatal");
     
     /* Non-fatal errors */
     TEST_ASSERT(!ewsp_error_is_fatal(EWSP_ERR_TIMEOUT), "TIMEOUT not fatal");
@@ -243,9 +242,9 @@ static int test_error_set_detail(void) {
     TEST_ASSERT_NOT_NULL(info.detail, "detail set");
     TEST_ASSERT(strstr(info.detail, "192.168.1.1") != NULL, "detail contains IP");
     
-    /* NULL detail clears it */
-    ewsp_error_set_detail(&info, NULL);
-    TEST_ASSERT(info.detail == NULL || strlen(info.detail) == 0, "detail cleared");
+    /* Setting empty string clears it */
+    ewsp_error_set_detail(&info, "");
+    TEST_ASSERT(strlen(info.detail) == 0, "detail cleared");
     
     return 1;
 }

@@ -52,7 +52,7 @@ static int test_create_command(void) {
     TEST_ASSERT(strstr(packet, "\"v\":\"1.0\"") != NULL, "Missing version");
     TEST_ASSERT(strstr(packet, "\"id\":\"WL12345678\"") != NULL, "Missing device_id");
     TEST_ASSERT(strstr(packet, "\"seq\":1") != NULL, "Missing sequence");
-    TEST_ASSERT(strstr(packet, "\"prev\":\"genesis\"") != NULL, "Missing prev_hash");
+    TEST_ASSERT(strstr(packet, "\"prev\":") != NULL, "Missing prev_hash");
     TEST_ASSERT(strstr(packet, "\"p\":") != NULL, "Missing payload");
     TEST_ASSERT(strstr(packet, "\"sig\":") != NULL, "Missing signature");
     

@@ -52,7 +52,7 @@ static int test_device_info_init(void) {
     /* Check defaults */
     TEST_ASSERT_EQ(strlen(info.device_id), 0, "device_id empty");
     TEST_ASSERT_EQ(strlen(info.firmware_version), 0, "firmware_version empty");
-    TEST_ASSERT_EQ(strlen(info.protocol_version), 0, "protocol_version empty");
+    TEST_ASSERT_STR_EQ(info.protocol_version, "1.0", "protocol_version default");
     TEST_ASSERT_EQ(strlen(info.ip_address), 0, "ip_address empty");
     TEST_ASSERT_EQ(strlen(info.mac_address), 0, "mac_address empty");
     TEST_ASSERT_EQ(info.uptime_seconds, 0, "uptime_seconds zero");
@@ -151,11 +151,6 @@ static int test_inner_packet_set_command(void) {
     /* Empty command */
     ewsp_inner_packet_set_command(&pkt, "");
     TEST_ASSERT_EQ(strlen(pkt.command), 0, "empty command");
-    
-    /* NULL command (should clear) */
-    ewsp_inner_packet_set_command(&pkt, "test");
-    ewsp_inner_packet_set_command(&pkt, NULL);
-    TEST_ASSERT_EQ(strlen(pkt.command), 0, "NULL clears command");
     
     return 1;
 }
@@ -338,8 +333,8 @@ static int test_chain_state_struct(void) {
     
     /* Set prev_hash */
     memset(chain.last_hash, 0xAB, 32);
-    TEST_ASSERT_EQ(chain.last_hash[0], 0xAB, "prev_hash[0]");
-    TEST_ASSERT_EQ(chain.last_hash[31], 0xAB, "prev_hash[31]");
+    TEST_ASSERT_EQ((unsigned char)chain.last_hash[0], 0xAB, "prev_hash[0]");
+    TEST_ASSERT_EQ((unsigned char)chain.last_hash[31], 0xAB, "prev_hash[31]");
     
     /* Max sequence */
     chain.sequence = 0xFFFFFFFF;

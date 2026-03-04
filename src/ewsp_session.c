@@ -319,17 +319,22 @@ ewsp_error_t ewsp_session_process_challenge(ewsp_session_mgr_t* mgr,
         return EWSP_ERR_LIMIT_EXCEEDED;
     }
     
+    /* Save client_random pre-populated by caller before clearing the slot */
+    uint8_t saved_client_random[EWSP_SESSION_RANDOM_SIZE];
+    memcpy(saved_client_random, session->client_random, EWSP_SESSION_RANDOM_SIZE);
+    
     ewsp_session_clear(session);
+    
+    /* Restore client_random after clear */
+    memcpy(session->client_random, saved_client_random, EWSP_SESSION_RANDOM_SIZE);
+    ewsp_secure_zero(saved_client_random, EWSP_SESSION_RANDOM_SIZE);
+    
     session->state = EWSP_SESSION_CHALLENGE;
     session->ratchet_enabled = challenge->ratchet_enabled;
     
     /* Copy challenge data to session */
     memcpy(session->session_id, challenge->session_id, EWSP_SESSION_ID_SIZE);
     memcpy(session->device_random, challenge->device_random, EWSP_SESSION_RANDOM_SIZE);
-    
-    /* Note: client_random was stored during create_init - we need to restore it */
-    /* For client side, this is typically stored elsewhere or passed in */
-    /* Here we assume the session was pre-populated with client_random */
     
     /* Derive keys */
     derive_session_keys(session, mgr->master_key);

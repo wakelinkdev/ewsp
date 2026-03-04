@@ -99,6 +99,8 @@ static int test_session_full_handshake(void) {
     TEST_ASSERT(challenge.expires_in > 0, "Challenge has no expiry");
     
     /* Step 3: Client processes challenge, creates confirm */
+    /* Pre-populate client_random as required by ewsp_session_process_challenge */
+    memcpy(client_mgr.sessions[0].client_random, init.client_random, EWSP_SESSION_RANDOM_SIZE);
     ewsp_session_confirm_t confirm;
     err = ewsp_session_process_challenge(&client_mgr, &challenge, &confirm);
     TEST_ASSERT(err == EWSP_OK, "Process challenge failed");
@@ -273,16 +275,16 @@ static int test_session_replay_protection(void) {
     session->replay_bitmap = 0xFFFFFFFFFFFFFFFF; /* All bits set */
     
     /* Counter 5 should be rejected (replay) */
-    bool valid = ewsp_session_validate_counter(session, 5);
-    TEST_ASSERT(!valid, "Should reject old counter");
+    ewsp_error_t counter_err = ewsp_session_validate_counter(session, 5);
+    TEST_ASSERT(counter_err != EWSP_OK, "Should reject old counter");
     
     /* Counter 11 should be accepted (new) */
-    valid = ewsp_session_validate_counter(session, 11);
-    TEST_ASSERT(valid, "Should accept new counter");
+    counter_err = ewsp_session_validate_counter(session, 11);
+    TEST_ASSERT(counter_err == EWSP_OK, "Should accept new counter");
     
     /* Counter 11 again should be rejected (replay) */
     /* Note: validate_counter may update internal state */
-    valid = ewsp_session_validate_counter(session, 11);
+    ewsp_session_validate_counter(session, 11);
     /* This depends on implementation - some update state, some don't */
     
     ewsp_session_mgr_cleanup(&mgr);
