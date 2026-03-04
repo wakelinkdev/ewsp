@@ -56,7 +56,7 @@ static const uint32_t SHA256_H0[8] = {
 static void sha256_transform(ewsp_sha256_ctx* ctx) {
     uint32_t w[64];
     uint32_t a, b, c, d, e, f, g, h;
-    uint32_t t1, t2;
+    uint32_t t1, t2;  /* cppcheck-suppress variableScope */
     int i;
 
     /* Prepare message schedule */
@@ -558,8 +558,6 @@ static void poly1305_block(ewsp_poly1305_ctx* ctx, const uint8_t block[16], uint
 }
 
 void ewsp_poly1305_update(ewsp_poly1305_ctx* ctx, const uint8_t* data, size_t len) {
-    size_t i;
-
     /* Process any buffered data */
     if (ctx->buflen > 0) {
         size_t want = 16 - ctx->buflen;
@@ -1012,6 +1010,7 @@ ewsp_error_t ewsp_crypto_encrypt(const ewsp_crypto_ctx* ctx,
     /* Generate random nonce */
     uint8_t nonce[EWSP_NONCE_SIZE];
     ewsp_error_t err = ewsp_random_bytes(nonce, EWSP_NONCE_SIZE);
+    /* cppcheck-suppress knownConditionTrueFalse */
     if (err != EWSP_OK) {
         free(binary);
         return err;

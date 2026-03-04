@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Tests
         working-directory: build
-        run: ctest --config Release --output-on-failure --verbose
+        run: ctest --output-on-failure --verbose
 
       - name: Upload build artifacts
         if: matrix.os == 'ubuntu-latest'

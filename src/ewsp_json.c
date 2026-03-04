@@ -603,7 +603,7 @@ int ewsp_json_unescape_string(const char* input, size_t input_len,
                 case 'u':
                     /* Unicode escape \uXXXX - simple ASCII only for now */
                     if (in_pos + 4 < input_len) {
-                        char hex[5] = {input[in_pos+1], input[in_pos+2], 
+                        const char hex[5] = {input[in_pos+1], input[in_pos+2], 
                                        input[in_pos+3], input[in_pos+4], 0};
                         unsigned int code = (unsigned int)strtoul(hex, NULL, 16);
                         if (code < 128) {
