@@ -17,10 +17,13 @@ jobs:
         include:
           - os: ubuntu-latest
             cmake_generator: "Unix Makefiles"
+            ctest_config: ""
           - os: windows-latest
             cmake_generator: "Visual Studio 17 2022"
+            ctest_config: "--build-config Release"
           - os: macos-latest
             cmake_generator: "Unix Makefiles"
+            ctest_config: ""
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +36,7 @@ jobs:
 
       - name: Run Tests
         working-directory: build
-        run: ctest --output-on-failure --verbose
+        run: ctest --output-on-failure --verbose ${{ matrix.ctest_config }}
 
       - name: Upload build artifacts
         if: matrix.os == 'ubuntu-latest'
