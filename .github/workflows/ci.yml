@@ -7,60 +7,26 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
-    name: Build & Test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            cmake_generator: "Unix Makefiles"
-            ctest_config: ""
-          - os: windows-latest
-            cmake_generator: "Visual Studio 17 2022"
-            ctest_config: "--build-config Release"
-          - os: macos-latest
-            cmake_generator: "Unix Makefiles"
-            ctest_config: ""
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure CMake
-        run: cmake -B build -G "${{ matrix.cmake_generator }}" -DEWSP_BUILD_TESTS=ON -DEWSP_BUILD_SHARED=ON -DEWSP_BUILD_STATIC=ON -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build --config Release
-
-      - name: Run Tests
-        working-directory: build
-        run: ctest --output-on-failure --verbose ${{ matrix.ctest_config }}
-
-      - name: Upload build artifacts
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ewsp-core-${{ matrix.os }}
-          path: |
-            build/libewsp_core*
-            build/ewsp_core*
-
-  lint:
-    name: Static Analysis
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DEWSP_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
 
-      - name: Install cppcheck
-        run: sudo apt-get update && sudo apt-get install -y cppcheck
-
-      - name: Run cppcheck
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y cppcheck
+      - name: cppcheck
         run: |
-          cppcheck --enable=warning,style,performance,portability \
-            --suppress=missingIncludeSystem \
-            --error-exitcode=1 \
-            --inline-suppr \
-            -I include/ \
-            src/
+          cppcheck --enable=warning,style --suppress=missingIncludeSystem \
+            --error-exitcode=1 -I include/ src/

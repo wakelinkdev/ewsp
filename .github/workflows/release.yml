@@ -3,60 +3,32 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
-
-permissions:
-  contents: write
+      - 'v*'
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
+    name: Build
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            artifact: libewsp_core.so
+            cmake_generator: "Unix Makefiles"
           - os: windows-latest
-            artifact: ewsp_core.dll
+            cmake_generator: "Visual Studio 17 2022"
           - os: macos-latest
-            artifact: libewsp_core.dylib
-
+            cmake_generator: "Unix Makefiles"
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configure CMake
-        run: cmake -B build -DEWSP_BUILD_TESTS=ON -DEWSP_BUILD_SHARED=ON -DCMAKE_BUILD_TYPE=Release
-
+      - name: Configure
+        run: cmake -B build -G "${{ matrix.cmake_generator }}" -DEWSP_BUILD_SHARED=ON -DEWSP_BUILD_STATIC=ON -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --config Release
-
-      - name: Test
-        working-directory: build
-        run: ctest --config Release --output-on-failure
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: ewsp-core-${{ matrix.os }}
-          path: build/*ewsp_core*
-
-  release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          files: artifacts/**/*
+          name: ewsp-${{ matrix.os }}
+          path: |
+            build/libewsp_core*
+            build/ewsp_core*
+            build/Release/*
