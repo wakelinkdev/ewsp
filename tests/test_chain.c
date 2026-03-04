@@ -126,8 +126,8 @@ static int test_chain_persistence(void) {
     ewsp_chain_snapshot_t snapshot;
     ewsp_chain_export(&ctx1, &snapshot);
     
-    TEST_ASSERT(snapshot.tx_sequence == 1, "Exported TX seq wrong");
-    TEST_ASSERT(snapshot.rx_sequence == 5, "Exported RX seq wrong");
+    TEST_ASSERT(snapshot.tx_seq == 1, "Exported TX seq wrong");
+    TEST_ASSERT(snapshot.rx_seq == 5, "Exported RX seq wrong");
     
     /* Import into new context */
     ewsp_chain_ctx_t ctx2;

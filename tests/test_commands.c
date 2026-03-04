@@ -158,12 +158,12 @@ static int test_cmd_build_generic(void) {
     ewsp_error_t err;
     
     /* Simple command without data */
-    err = ewsp_cmd_build("test_cmd", NULL, json, sizeof(json));
+    err = ewsp_cmd_build("test_cmd", NULL, NULL, json, sizeof(json));
     TEST_ASSERT_OK(err);
     TEST_ASSERT(strstr(json, "\"test_cmd\"") != NULL, "has command name");
     
     /* Command with data */
-    err = ewsp_cmd_build("test_cmd", "{\"key\":\"value\"}", json, sizeof(json));
+    err = ewsp_cmd_build("test_cmd", "{\"key\":\"value\"}", NULL, json, sizeof(json));
     TEST_ASSERT_OK(err);
     TEST_ASSERT(strstr(json, "\"test_cmd\"") != NULL, "has command name");
     TEST_ASSERT(strstr(json, "\"key\"") != NULL, "has data key");
@@ -211,7 +211,7 @@ static int test_response_build_error(void) {
     char json[512];
     ewsp_error_t err;
     
-    err = ewsp_response_build_error(EWSP_ERR_AUTH_FAILED, "req456", json, sizeof(json));
+    err = ewsp_response_build_error(EWSP_ERR_AUTH_FAILED, NULL, "req456", json, sizeof(json));
     TEST_ASSERT_OK(err);
     TEST_ASSERT(strstr(json, "\"status\"") != NULL, "has status field");
     TEST_ASSERT(strstr(json, "\"error\"") != NULL, "has error status");
@@ -263,14 +263,14 @@ static int test_response_parse(void) {
     const char* ok_json = "{\"status\":\"ok\",\"rid\":\"test123\"}";
     err = ewsp_response_parse(ok_json, &response);
     TEST_ASSERT_OK(err);
-    TEST_ASSERT_STR_EQ(response.status, "ok", "parsed status");
-    TEST_ASSERT_STR_EQ(response.rid, "test123", "parsed rid");
+    TEST_ASSERT(response.success, "parsed status ok");
+    TEST_ASSERT_STR_EQ(response.request_id, "test123", "parsed rid");
     
     /* Parse error response */
     const char* err_json = "{\"status\":\"error\",\"rid\":\"err456\",\"error_code\":-200}";
     err = ewsp_response_parse(err_json, &response);
     TEST_ASSERT_OK(err);
-    TEST_ASSERT_STR_EQ(response.status, "error", "parsed error status");
+    TEST_ASSERT(!response.success, "parsed error status");
     
     /* Invalid JSON */
     err = ewsp_response_parse("not json", &response);

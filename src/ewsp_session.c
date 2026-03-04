@@ -171,8 +171,10 @@ ewsp_error_t ewsp_session_handle_init(ewsp_session_mgr_t* mgr,
     /* Store client random */
     memcpy(session->client_random, init->client_random, EWSP_SESSION_RANDOM_SIZE);
     
-    /* Derive client_id from client_random */
-    ewsp_sha256(init->client_random, EWSP_SESSION_RANDOM_SIZE, session->client_id);
+    /* Derive client_id from client_random (first 16 bytes of SHA-256) */
+    uint8_t hash[32];
+    ewsp_sha256(init->client_random, EWSP_SESSION_RANDOM_SIZE, hash);
+    memcpy(session->client_id, hash, sizeof(session->client_id));
     
     /* Generate device random */
     ewsp_random_bytes(session->device_random, EWSP_SESSION_RANDOM_SIZE);
@@ -280,7 +282,7 @@ ewsp_error_t ewsp_session_handle_confirm(ewsp_session_mgr_t* mgr,
  * Handshake - Client Side
  * ============================================================================ */
 
-ewsp_error_t ewsp_session_create_init(ewsp_session_mgr_t* mgr,
+ewsp_error_t ewsp_session_create_init(const ewsp_session_mgr_t* mgr,
                                        const char* client_info,
                                        ewsp_session_init_t* init) {
     if (!mgr || !mgr->initialized || !init) {

@@ -183,7 +183,7 @@ static int test_chain_state_persistence(void) {
     ewsp_chain_snapshot_t snapshot;
     ewsp_packet_export_state(&ctx1, &snapshot);
     
-    TEST_ASSERT(snapshot.tx_sequence == 2, "Wrong TX sequence in snapshot");
+    TEST_ASSERT(snapshot.tx_seq == 2, "Wrong TX sequence in snapshot");
     
     /* Create new context and import state */
     ewsp_packet_ctx ctx2;

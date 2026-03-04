@@ -280,7 +280,7 @@ ewsp_error_t ewsp_session_handle_confirm(ewsp_session_mgr_t* mgr,
  * @param init Output init request to send.
  * @return EWSP_OK on success.
  */
-ewsp_error_t ewsp_session_create_init(ewsp_session_mgr_t* mgr,
+ewsp_error_t ewsp_session_create_init(const ewsp_session_mgr_t* mgr,
                                        const char* client_info,
                                        ewsp_session_init_t* init);
 

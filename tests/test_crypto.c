@@ -21,7 +21,7 @@ static int test_sha256(void) {
     const char* input = "hello";
     const char* expected = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
     
-    ewsp_hash_t hash;
+    uint8_t hash[32];
     ewsp_sha256((const uint8_t*)input, strlen(input), hash);
     
     char hex[65];
@@ -41,7 +41,7 @@ static int test_hmac(void) {
     const char* data = "The quick brown fox jumps over the lazy dog";
     const char* expected = "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8";
     
-    ewsp_hash_t mac;
+    uint8_t mac[32];
     ewsp_hmac_sha256((const uint8_t*)key, strlen(key),
                      (const uint8_t*)data, strlen(data),
                      mac);

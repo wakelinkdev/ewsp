@@ -13,6 +13,7 @@
 #include "ewsp_models.h"
 #include "ewsp_errors.h"
 #include "ewsp_types.h"
+#include "ewsp_chain.h"
 
 /* ============================================================================
  * Test Counters
@@ -125,9 +126,8 @@ static int test_inner_packet_init(void) {
     ewsp_inner_packet_init(&pkt);
     
     /* Check defaults */
-    TEST_ASSERT_EQ(strlen(pkt.cmd), 0, "cmd empty");
-    TEST_ASSERT_EQ(strlen(pkt.rid), 0, "rid empty");
-    TEST_ASSERT_EQ(pkt.timestamp, 0, "timestamp zero");
+    TEST_ASSERT_EQ(strlen(pkt.command), 0, "cmd empty");
+    TEST_ASSERT_EQ(strlen(pkt.request_id), 0, "rid empty");
     
     return 1;
 }
@@ -140,22 +140,22 @@ static int test_inner_packet_set_command(void) {
     
     /* Set normal command */
     ewsp_inner_packet_set_command(&pkt, "ping");
-    TEST_ASSERT_STR_EQ(pkt.cmd, "ping", "ping command set");
+    TEST_ASSERT_STR_EQ(pkt.command, "ping", "ping command set");
     
     ewsp_inner_packet_set_command(&pkt, "wake");
-    TEST_ASSERT_STR_EQ(pkt.cmd, "wake", "wake command set");
+    TEST_ASSERT_STR_EQ(pkt.command, "wake", "wake command set");
     
     ewsp_inner_packet_set_command(&pkt, "get_config");
-    TEST_ASSERT_STR_EQ(pkt.cmd, "get_config", "get_config command set");
+    TEST_ASSERT_STR_EQ(pkt.command, "get_config", "get_config command set");
     
     /* Empty command */
     ewsp_inner_packet_set_command(&pkt, "");
-    TEST_ASSERT_EQ(strlen(pkt.cmd), 0, "empty command");
+    TEST_ASSERT_EQ(strlen(pkt.command), 0, "empty command");
     
     /* NULL command (should clear) */
     ewsp_inner_packet_set_command(&pkt, "test");
     ewsp_inner_packet_set_command(&pkt, NULL);
-    TEST_ASSERT_EQ(strlen(pkt.cmd), 0, "NULL clears command");
+    TEST_ASSERT_EQ(strlen(pkt.command), 0, "NULL clears command");
     
     return 1;
 }
@@ -168,7 +168,7 @@ static int test_inner_packet_set_rid(void) {
     
     /* Set normal rid */
     ewsp_inner_packet_set_rid(&pkt, "abc123");
-    TEST_ASSERT_STR_EQ(pkt.rid, "abc123", "rid set");
+    TEST_ASSERT_STR_EQ(pkt.request_id, "abc123", "rid set");
     
     /* Set max length rid */
     char long_rid[EWSP_REQUEST_ID_LEN + 10];
@@ -176,7 +176,7 @@ static int test_inner_packet_set_rid(void) {
     long_rid[sizeof(long_rid) - 1] = '\0';
     
     ewsp_inner_packet_set_rid(&pkt, long_rid);
-    TEST_ASSERT(strlen(pkt.rid) <= EWSP_REQUEST_ID_LEN, "rid truncated to max");
+    TEST_ASSERT(strlen(pkt.request_id) <= EWSP_REQUEST_ID_LEN, "rid truncated to max");
     
     return 1;
 }
@@ -193,11 +193,11 @@ static int test_inner_packet_generate_rid(void) {
     ewsp_inner_packet_generate_rid(&pkt2);
     
     /* Both should have rids */
-    TEST_ASSERT(strlen(pkt1.rid) > 0, "pkt1 rid generated");
-    TEST_ASSERT(strlen(pkt2.rid) > 0, "pkt2 rid generated");
+    TEST_ASSERT(strlen(pkt1.request_id) > 0, "pkt1 rid generated");
+    TEST_ASSERT(strlen(pkt2.request_id) > 0, "pkt2 rid generated");
     
     /* Rids should be different (with very high probability) */
-    TEST_ASSERT(strcmp(pkt1.rid, pkt2.rid) != 0, "rids are unique");
+    TEST_ASSERT(strcmp(pkt1.request_id, pkt2.request_id) != 0, "rids are unique");
     
     return 1;
 }
@@ -304,15 +304,15 @@ static int test_response_struct(void) {
     memset(&resp, 0, sizeof(resp));
     
     /* Set status */
-    strcpy(resp.status, "ok");
-    TEST_ASSERT_STR_EQ(resp.status, "ok", "status ok");
+    resp.success = true;
+    TEST_ASSERT(resp.success, "status ok");
     
-    strcpy(resp.status, "error");
-    TEST_ASSERT_STR_EQ(resp.status, "error", "status error");
+    resp.success = false;
+    TEST_ASSERT(!resp.success, "status error");
     
     /* Set rid */
-    strcpy(resp.rid, "request_12345");
-    TEST_ASSERT_STR_EQ(resp.rid, "request_12345", "rid set");
+    strcpy(resp.request_id, "request_12345");
+    TEST_ASSERT_STR_EQ(resp.request_id, "request_12345", "rid set");
     
     /* Set error code */
     resp.error_code = EWSP_ERR_AUTH_FAILED;
@@ -333,17 +333,17 @@ static int test_chain_state_struct(void) {
     memset(&chain, 0, sizeof(chain));
     
     /* Set sequence */
-    chain.seq = 42;
-    TEST_ASSERT_EQ(chain.seq, 42, "seq set");
+    chain.sequence = 42;
+    TEST_ASSERT_EQ(chain.sequence, 42, "seq set");
     
     /* Set prev_hash */
-    memset(chain.prev_hash, 0xAB, 32);
-    TEST_ASSERT_EQ(chain.prev_hash[0], 0xAB, "prev_hash[0]");
-    TEST_ASSERT_EQ(chain.prev_hash[31], 0xAB, "prev_hash[31]");
+    memset(chain.last_hash, 0xAB, 32);
+    TEST_ASSERT_EQ(chain.last_hash[0], 0xAB, "prev_hash[0]");
+    TEST_ASSERT_EQ(chain.last_hash[31], 0xAB, "prev_hash[31]");
     
     /* Max sequence */
-    chain.seq = 0xFFFFFFFF;
-    TEST_ASSERT_EQ(chain.seq, 0xFFFFFFFF, "max seq");
+    chain.sequence = 0xFFFFFFFF;
+    TEST_ASSERT_EQ(chain.sequence, 0xFFFFFFFF, "max seq");
     
     return 1;
 }
@@ -360,26 +360,22 @@ static int test_outer_packet_struct(void) {
     memset(&outer, 0, sizeof(outer));
     
     /* Set version */
-    outer.version = 2;
-    TEST_ASSERT_EQ(outer.version, 2, "version 2");
+    strncpy(outer.version, "1.0", sizeof(outer.version));
+    TEST_ASSERT_STR_EQ(outer.version, "1.0", "version 1.0");
     
     /* Set device_id */
     strcpy(outer.device_id, "wl_device_01");
     TEST_ASSERT_STR_EQ(outer.device_id, "wl_device_01", "device_id set");
     
-    /* Set seq */
-    outer.seq = 100;
-    TEST_ASSERT_EQ(outer.seq, 100, "seq set");
+    /* Set sequence */
+    outer.sequence = 100;
+    TEST_ASSERT_EQ(outer.sequence, 100, "seq set");
     
-    /* Set nonce (24 bytes for XChaCha20) */
-    memset(outer.nonce, 0x11, sizeof(outer.nonce));
-    TEST_ASSERT_EQ(outer.nonce[0], 0x11, "nonce[0]");
-    TEST_ASSERT_EQ(outer.nonce[23], 0x11, "nonce[23]");
-    
-    /* Set signature (32 bytes for HMAC-SHA256) */
-    memset(outer.signature, 0x22, sizeof(outer.signature));
-    TEST_ASSERT_EQ(outer.signature[0], 0x22, "sig[0]");
-    TEST_ASSERT_EQ(outer.signature[31], 0x22, "sig[31]");
+    /* Set signature (hex string, 64 chars + null) */
+    memset(outer.signature, 'a', 64);
+    outer.signature[64] = '\0';
+    TEST_ASSERT_EQ(outer.signature[0], 'a', "sig[0]");
+    TEST_ASSERT_EQ(outer.signature[63], 'a', "sig[63]");
     
     return 1;
 }

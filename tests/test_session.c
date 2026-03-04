@@ -60,11 +60,11 @@ static int test_session_mgr_null_checks(void) {
     
     /* NULL manager */
     ewsp_error_t err = ewsp_session_mgr_init(NULL, test_master_key);
-    TEST_ASSERT(err == EWSP_ERR_NULL_PTR, "Should reject NULL manager");
+    TEST_ASSERT(err == EWSP_ERR_INVALID_PARAMS, "Should reject NULL manager");
     
     /* NULL key */
     err = ewsp_session_mgr_init(&mgr, NULL);
-    TEST_ASSERT(err == EWSP_ERR_NULL_PTR, "Should reject NULL key");
+    TEST_ASSERT(err == EWSP_ERR_INVALID_PARAMS, "Should reject NULL key");
     
     TEST_PASS("Session manager null checks");
     return 0;
@@ -188,19 +188,22 @@ static int test_session_encrypt_decrypt(void) {
     size_t ciphertext_len;
     
     /* Encrypt */
-    err = ewsp_session_encrypt(session, 
+    uint64_t counter = 0;
+    ciphertext_len = ewsp_session_encrypt(session,
                                (const uint8_t*)plaintext, strlen(plaintext),
-                               ciphertext, sizeof(ciphertext), &ciphertext_len);
-    TEST_ASSERT(err == EWSP_OK, "Encryption failed");
+                               NULL, 0,
+                               ciphertext, &counter);
+    TEST_ASSERT(ciphertext_len > 0, "Encryption failed");
     TEST_ASSERT(ciphertext_len > strlen(plaintext), "Ciphertext too short (no tag?)");
     
     /* Decrypt */
     uint8_t decrypted[256];
     size_t decrypted_len;
-    err = ewsp_session_decrypt(session,
+    decrypted_len = ewsp_session_decrypt(session,
                                ciphertext, ciphertext_len,
-                               decrypted, sizeof(decrypted) - 1, &decrypted_len);
-    TEST_ASSERT(err == EWSP_OK, "Decryption failed");
+                               NULL, 0,
+                               decrypted, counter);
+    TEST_ASSERT(decrypted_len > 0, "Decryption failed");
     decrypted[decrypted_len] = '\0';
     
     TEST_ASSERT(strcmp((char*)decrypted, plaintext) == 0, "Decrypted mismatch");
@@ -229,10 +232,12 @@ static int test_session_tampered_ciphertext(void) {
     size_t ciphertext_len;
     
     /* Encrypt */
-    err = ewsp_session_encrypt(session, 
+    uint64_t counter2 = 0;
+    ciphertext_len = ewsp_session_encrypt(session,
                                (const uint8_t*)plaintext, strlen(plaintext),
-                               ciphertext, sizeof(ciphertext), &ciphertext_len);
-    TEST_ASSERT(err == EWSP_OK, "Encryption failed");
+                               NULL, 0,
+                               ciphertext, &counter2);
+    TEST_ASSERT(ciphertext_len > 0, "Encryption failed");
     
     /* Tamper with ciphertext */
     ciphertext[0] ^= 0xFF;
@@ -240,11 +245,11 @@ static int test_session_tampered_ciphertext(void) {
     /* Decrypt should fail */
     uint8_t decrypted[256];
     size_t decrypted_len;
-    err = ewsp_session_decrypt(session,
+    decrypted_len = ewsp_session_decrypt(session,
                                ciphertext, ciphertext_len,
-                               decrypted, sizeof(decrypted), &decrypted_len);
-    TEST_ASSERT(err == EWSP_ERR_AUTH_FAILED || err == EWSP_ERR_DECRYPT, 
-                "Should reject tampered ciphertext");
+                               NULL, 0,
+                               decrypted, counter2);
+    TEST_ASSERT(decrypted_len == 0, "Should reject tampered ciphertext");
     
     ewsp_session_mgr_cleanup(&mgr);
     
@@ -308,8 +313,7 @@ static int test_session_key_ratchet(void) {
     memcpy(original_enc, session->enc_key, EWSP_SESSION_KEY_SIZE);
     
     /* Perform ratchet */
-    err = ewsp_session_ratchet(session);
-    TEST_ASSERT(err == EWSP_OK, "Ratchet failed");
+    ewsp_session_ratchet(session);
     
     /* Key should have changed */
     TEST_ASSERT(memcmp(original_enc, session->enc_key, EWSP_SESSION_KEY_SIZE) != 0,
