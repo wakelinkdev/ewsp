@@ -306,8 +306,8 @@ static int test_response_struct(void) {
     TEST_ASSERT(!resp.success, "status error");
     
     /* Set rid */
-    strcpy(resp.request_id, "request_12345");
-    TEST_ASSERT_STR_EQ(resp.request_id, "request_12345", "rid set");
+    strcpy(resp.request_id, "req12345");
+    TEST_ASSERT_STR_EQ(resp.request_id, "req12345", "rid set");
     
     /* Set error code */
     resp.error_code = EWSP_ERR_AUTH_FAILED;
