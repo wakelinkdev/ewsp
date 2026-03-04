@@ -1,3 +1,5 @@
+[🇬🇧 English](README.md) | [🇷🇺 Русский](README_RU.md)
+
 # EWSP Core Library
 
 <p align="center">

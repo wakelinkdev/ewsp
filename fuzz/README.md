@@ -1,3 +1,5 @@
+[🇬🇧 English](README.md) | [🇷🇺 Русский](README_RU.md)
+
 # EWSP-Core Fuzzing
 
 AFL++ fuzzing harnesses for security testing of ewsp-core library.

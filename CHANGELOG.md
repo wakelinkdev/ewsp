@@ -1,3 +1,5 @@
+[🇬🇧 English](CHANGELOG.md) | [🇷🇺 Русский](CHANGELOG_RU.md)
+
 # Changelog
 
 All notable changes to EWSP Core Library will be documented in this file.
