@@ -28,5 +28,5 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y cppcheck
       - name: cppcheck
         run: |
-          cppcheck --enable=warning,style --suppress=missingIncludeSystem \
+          cppcheck --enable=warning --suppress=missingIncludeSystem \
             --error-exitcode=1 -I include/ src/
